@@ -4,8 +4,11 @@ import * as path from "path";
 import express, { Request, Response } from "express";
 import cors from "cors";
 import multer from "multer";
-import { runWeaver } from "./weaver";
+//import { runWeaver } from "./weaver";
 import { randomUUID } from "crypto";
+const { StaticPool } = require("node-worker-threads-pool");
+
+const N_THREADS = 6;
 
 const app = express();
 app.use(cors());
@@ -14,6 +17,12 @@ app.use(express.json());
 const PORT = process.env.PORT || 4000;
 
 const tempDir = "temp";
+
+// Create a pool with 4 workers
+const pool = new StaticPool({
+  size: N_THREADS, // number of threads
+  task: path.resolve(__dirname, "weaver.js"),
+});
 
 // Define proper types for multer files
 interface MulterFiles {
@@ -67,7 +76,7 @@ app.post(
     { name: 'file', maxCount: 1 },
 */
   ]),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     console.log("========= ENDPOINT HIT =========");
     console.log("Request received at:", new Date().toISOString());
 
@@ -102,6 +111,29 @@ app.post(
 
     console.log("Using args:", args);
 
+    try {
+      const result = await pool.exec({
+        tool: tool,
+        inputCode: inputCode,
+        sourceFilename: sourceFilename,
+        scriptCode: scriptCode,
+        args: args,
+        sessionTempDir: sessionTempDir,
+      });
+      res.json({ result });
+      
+    } catch (err: any) {
+      console.error(err);
+      res.status(200).json({
+        fileNames: [],
+        outputs: [],
+        mainFile: -1,
+        console: err,
+        exceptionOccured: true,
+      });
+    }
+
+    /*
     runWeaver(
       tool || "",
       inputCode || "",
@@ -125,7 +157,7 @@ app.post(
           console: error,
           exceptionOccured: true,
         });
-      });
+      });*/
   }
 );
 

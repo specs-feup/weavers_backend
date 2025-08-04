@@ -4,9 +4,19 @@ This file provides the functions needed to Weave the input files received by the
 
 import * as fs from "fs";
 import * as path from "path";
-import unzipper from "unzipper";
-import archiver from "archiver";
+//import unzipper from "unzipper";
+//import archiver from "archiver";
 import { execFile } from "child_process";
+const { parentPort, workerData } = require("worker_threads");
+
+interface WorkerData {
+  tool: string;
+  sourceCode: string;
+  sourceFilename: string;
+  scriptFile: string;
+  args: string[];
+  tempDir: string;
+}
 
 /**
  * Unzips a zip file to a target directory using unzipper.
@@ -14,19 +24,21 @@ import { execFile } from "child_process";
  * @param targetDir - Directory to extract to.
  * @returns Promise<void>
  */
+/*
 async function unzipFile(zipPath: string, targetDir: string): Promise<void> {
   await fs
     .createReadStream(zipPath)
     .pipe(unzipper.Extract({ path: targetDir }))
     .promise();
 }
-
+*/
 /**
  * Zips a folder to a specified output path using archiver.
  * @param sourceFolder Source folder to zip
  * @param outPath Output path for the zip file
  * @returns Promise<void>
  */
+/*
 function zipFolder(sourceFolder: string, outPath: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const output = fs.createWriteStream(outPath);
@@ -41,7 +53,7 @@ function zipFolder(sourceFolder: string, outPath: string): Promise<void> {
     archive.finalize();
   });
 }
-
+*/
 /**
  *
  * @param tool The Weaver tool to use (e.g., 'clava')
@@ -52,13 +64,23 @@ function zipFolder(sourceFolder: string, outPath: string): Promise<void> {
  * @returns A promise that resolves to an object with log content string and path to woven code zip
  */
 async function runWeaver(
+  data: WorkerData
+  /*
   tool: string,
   sourceCode: string,
   sourceFilename: string,
   scriptFile: string,
   args: string[],
   tempDir: string = "temp/"
+*/
 ) {
+  const tool = data.tool;
+  const sourceCode = data.sourceCode;
+  const sourceFilename = data.sourceFilename;
+  const scriptFile = data.scriptFile;
+  const args = data.args;
+  const tempDir = data.tempDir;
+
   console.log("=== runWeaver called ===");
   console.log("tool:", tool);
   console.log("sourceCode:", sourceCode);
@@ -215,4 +237,10 @@ async function runWeaver(
   };
 }
 
-export { runWeaver };
+runWeaver(workerData as WorkerData)
+  .then((result) => parentPort?.postMessage({ success: true, result }))
+  .catch((err) =>
+    parentPort?.postMessage({ success: false, error: err.message })
+  );
+
+//export { runWeaver };

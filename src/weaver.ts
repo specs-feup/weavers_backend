@@ -123,7 +123,13 @@ async function runWeaver(
   await new Promise<void>((resolve, reject) => {
     execFile("npx", finalArgs, (error, stdout, stderr) => {
       // Concatenate stdout, stderr and error for the log
-      logContent = stdout + "\n\n" + stderr + "\n" + error + "\n\n";
+      //logContent = stdout + "\n\n" + stderr + "\n" + error + "\n\n";
+
+      logContent = stdout;
+
+      if (error != null) {
+        logContent += "\n\n" + error;
+      }
 
       if (error) {
         // If the process itself failed, a.k.a exit code is not 0
@@ -195,10 +201,9 @@ async function runWeaver(
   //await zipFolder(inputFolderInWovenCode, outputZipPath);
 
   // Clean up session directory on weaver failure
-  //  if (fs.existsSync(tempDir)) {
-  //    fs.rmSync(tempDir, { recursive: true, force: true });
-  //  }
-  console.log("Filenames outside: " + fileNames);
+  if (fs.existsSync(tempDir)) {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
 
   // Return the log content and woven_code file contents
   return {

@@ -4,7 +4,6 @@ import * as path from "path";
 import express, { Request, Response } from "express";
 import cors from "cors";
 import multer from "multer";
-//import { runWeaver } from "./weaver";
 import { randomUUID } from "crypto";
 const { StaticPool } = require("node-worker-threads-pool");
 
@@ -24,11 +23,6 @@ const pool = new StaticPool({
   task: path.resolve(__dirname, "weaver.js"),
 });
 
-// Define proper types for multer files
-interface MulterFiles {
-  zipfile?: Express.Multer.File[];
-  file?: Express.Multer.File[];
-}
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -71,30 +65,17 @@ app.post(
   "/api/weave",
   upload.fields([
     { name: "name", maxCount: 1 },
-    /*
-    { name: 'zipfile', maxCount: 1 },
-    { name: 'file', maxCount: 1 },
-*/
+
   ]),
   async (req: Request, res: Response) => {
     console.log("========= ENDPOINT HIT =========");
     console.log("Request received at:", new Date().toISOString());
 
-    //const tool = process.env.TOOL;
-    //const tool = "clava";
-    //const files = req.files as MulterFiles;
     const sessionId = (req as any).sessionId;
     const tool = (req as any).body.tool;
     console.log("SessionId:", sessionId);
     console.log("Tool:", tool);
-    /*
-    console.log("Files:", files);
 
-    if (!files || (!files.zipfile && !files.file)) {
-      res.status(400).json({ error: "No file uploaded" });
-      return;
-    }
-      */
     console.log("Received request body:", req.body);
     console.log("Args from request:", req.body.args);
 
@@ -121,7 +102,7 @@ app.post(
         sessionTempDir: sessionTempDir,
       });
       res.json({ result });
-      
+
     } catch (err: any) {
       console.error(err);
       res.status(200).json({
@@ -132,32 +113,6 @@ app.post(
         exceptionOccured: true,
       });
     }
-
-    /*
-    runWeaver(
-      tool || "",
-      inputCode || "",
-      sourceFilename || "",
-      scriptCode || "",
-      args,
-      sessionTempDir
-    )
-      .then((result) => {
-        console.log("Weaver tool executed successfully");
-
-        // Just return the result of the backend
-        res.status(200).json(result);
-      })
-      .catch((error) => {
-        console.error("Weaver error:", error);
-        res.status(200).json({
-          fileNames: [],
-          outputs: [],
-          mainFile: -1,
-          console: error,
-          exceptionOccured: true,
-        });
-      });*/
   }
 );
 

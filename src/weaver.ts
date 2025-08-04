@@ -4,76 +4,59 @@ This file provides the functions needed to Weave the input files received by the
 
 import * as fs from "fs";
 import * as path from "path";
-//import unzipper from "unzipper";
-//import archiver from "archiver";
 import { execFile } from "child_process";
 const { parentPort, workerData } = require("worker_threads");
 
+/**
+ * The input data for a weaver execution.
+ */
 interface WorkerData {
+  /** The Weaver tool to use (e.g., 'clava') */
   tool: string;
+  /** The source code to weave */
   sourceCode: string;
+  /** The name of the source file */
   sourceFilename: string;
+  /** The javascript file to use for weaving */
   scriptFile: string;
+  /** The arguments to use for weaving (e.g., '-std c++11') */
   args: string[];
+  /** The temporary directory where files will be writte. It is deleted after the call */
   tempDir: string;
 }
 
 /**
- * Unzips a zip file to a target directory using unzipper.
- * @param zipPath - Path to the zip file.
- * @param targetDir - Directory to extract to.
- * @returns Promise<void>
+ * The output data of the weaver execution.
  */
-/*
-async function unzipFile(zipPath: string, targetDir: string): Promise<void> {
-  await fs
-    .createReadStream(zipPath)
-    .pipe(unzipper.Extract({ path: targetDir }))
-    .promise();
+interface WorkerOutput {
+  /** The names of the weaved source files */
+  fileNames: string[];
+  /** The source code of the weaved source files */
+  outputs: string[];
+  /** The index of the main source file */
+  mainFile: number;
+  /** The console output of the execution */
+  console: string;
+  /** True if an exception occurred, false otherwise */
+  exceptionOccured: boolean;
 }
-*/
-/**
- * Zips a folder to a specified output path using archiver.
- * @param sourceFolder Source folder to zip
- * @param outPath Output path for the zip file
- * @returns Promise<void>
- */
-/*
-function zipFolder(sourceFolder: string, outPath: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const output = fs.createWriteStream(outPath);
-    const archive = archiver("zip", { zlib: { level: 9 } });
 
-    output.on("close", () => resolve());
-    archive.on("error", (err: Error) => reject(err));
-
-    archive.pipe(output);
-    // Include the folder itself in the zip with the name "woven_code"
-    archive.directory(sourceFolder, "woven_code");
-    archive.finalize();
-  });
-}
-*/
 /**
  *
  * @param tool The Weaver tool to use (e.g., 'clava')
- * @param inputFile The input file to weave, which is a zip file that will be unzipped
+ * @param sourceCode The source code to weave
+ * @param source
  * @param scriptFile The javascript file to use for weaving
  * @param args The Arguments to use for weaving (e.g., '-std c++11')
  * @param tempDir The temporary directory to use for input and output files (default is 'temp/')
- * @returns A promise that resolves to an object with log content string and path to woven code zip
+ * @returns A promise that resolves to an object representing an WorkerOutput
  */
-async function runWeaver(
-  data: WorkerData
-  /*
-  tool: string,
-  sourceCode: string,
-  sourceFilename: string,
-  scriptFile: string,
-  args: string[],
-  tempDir: string = "temp/"
-*/
-) {
+/**
+ *
+ * @param data
+ * @returns
+ */
+async function runWeaver(data: WorkerData): Promise<WorkerOutput> {
   const tool = data.tool;
   const sourceCode = data.sourceCode;
   const sourceFilename = data.sourceFilename;
@@ -88,6 +71,7 @@ async function runWeaver(
   console.log("scriptFile:", scriptFile);
   console.log("args:", args);
   console.log("tempDir:", tempDir);
+
   // Throw error if any of the required parameters are missing
   if (!tool) {
     throw new Error("Missing required parameters: tool");
@@ -107,10 +91,8 @@ async function runWeaver(
     console.log("Folder '" + tempDir + "' created successfully!");
   } catch (err) {
     throw err;
-    //throw new Error("Error creating folder '" + tempDir + "': " + err);
   }
 
-  //  await unzipFile(inputFile, inputPath);
   fs.writeFile(inputPath, sourceCode, "utf8", (err) => {
     if (err) {
       throw new Error("Error writing file '" + inputPath + "':", err);
@@ -178,7 +160,6 @@ async function runWeaver(
     // Output directory
     const resultFolderName = "woven_code";
     const resultFolder = path.join(tempDir, resultFolderName);
-    //const outputPath = path.join(resultFolder, sourceFilename);
 
     // Read all generated files
     // TODO: Should receive as parameters a filter with supported extensions?
@@ -216,12 +197,6 @@ async function runWeaver(
     }
   }
 
-  //const outputZipPath = path.join(tempDir, `${resultFolderName}.zip`);
-
-  // Zip the 'input' folder inside the 'woven_code' folder, but name it 'woven_code' in the ZIP
-  //const inputFolderInWovenCode = path.join(tempDir, resultFolderName, "input");
-  //await zipFolder(inputFolderInWovenCode, outputZipPath);
-
   // Clean up session directory on weaver failure
   if (fs.existsSync(tempDir)) {
     fs.rmSync(tempDir, { recursive: true, force: true });
@@ -242,5 +217,3 @@ runWeaver(workerData as WorkerData)
   .catch((err) =>
     parentPort?.postMessage({ success: false, error: err.message })
   );
-
-//export { runWeaver };

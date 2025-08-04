@@ -5,12 +5,13 @@ This file provides the functions needed to Weave the input files received by the
 import * as fs from "fs";
 import * as path from "path";
 import { execFile } from "child_process";
-const { parentPort, workerData } = require("worker_threads");
+//const { parentPort, workerData } = require("worker_threads");
+const { parentPort, workerData } = require("node:worker_threads");
 
 /**
  * The input data for a weaver execution.
  */
-interface WorkerData {
+export interface WorkerData {
   /** The Weaver tool to use (e.g., 'clava') */
   tool: string;
   /** The source code to weave */
@@ -28,7 +29,7 @@ interface WorkerData {
 /**
  * The output data of the weaver execution.
  */
-interface WorkerOutput {
+export interface WorkerOutput {
   /** The names of the weaved source files */
   fileNames: string[];
   /** The source code of the weaved source files */
@@ -51,11 +52,18 @@ interface WorkerOutput {
  * @param tempDir The temporary directory to use for input and output files (default is 'temp/')
  * @returns A promise that resolves to an object representing an WorkerOutput
  */
+/*
+module.exports = (data: WorkerData) => {
+  console.log("Worker started with data:", data);
+  return 1;
+};
+*/
 /**
  *
  * @param data
  * @returns
  */
+//module.exports = async (data: WorkerData): Promise<WorkerOutput> => {
 async function runWeaver(data: WorkerData): Promise<WorkerOutput> {
   const tool = data.tool;
   const sourceCode = data.sourceCode;
@@ -212,8 +220,36 @@ async function runWeaver(data: WorkerData): Promise<WorkerOutput> {
   };
 }
 
+parentPort.on("message", async (payload: WorkerData) => {
+  try {
+    const result = await runWeaver(payload);
+    //parentPort.postMessage({ success: true, result });
+    parentPort.postMessage(result);
+  } catch (error) {
+    //parentPort.postMessage({ success: false, error: error.message });
+    parentPort.postMessage({
+      fileNames: [],
+      outputs: [],
+      mainFile: -1,
+      console: error,
+      exceptionOccured: true,
+    });
+  }
+});
+/*
+(async () => {
+  try {
+    const result = await runWeaver(workerData);
+    parentPort.postMessage(result);
+  } catch (err: any) {
+    parentPort.postMessage({ error: err.message });
+  }
+})();
+*/
+/*
 runWeaver(workerData as WorkerData)
   .then((result) => parentPort?.postMessage({ success: true, result }))
   .catch((err) =>
     parentPort?.postMessage({ success: false, error: err.message })
   );
+*/

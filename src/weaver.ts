@@ -8,6 +8,8 @@ import { execFile } from "child_process";
 //const { parentPort, workerData } = require("worker_threads");
 const { parentPort, workerData } = require("node:worker_threads");
 
+const TIMEOUT_MS = 60000; // 60 seconds
+
 /**
  * The input data for a weaver execution.
  */
@@ -133,28 +135,41 @@ async function runWeaver(data: WorkerData): Promise<WorkerOutput> {
   let exceptionOccured = false;
 
   await new Promise<void>((resolve, reject) => {
-    execFile("npx", finalArgs, (error, stdout, stderr) => {
-      // Concatenate stdout, stderr and error for the log
-      //logContent = stdout + "\n\n" + stderr + "\n" + error + "\n\n";
+    execFile(
+      "npx",
+      finalArgs,
+      { timeout: TIMEOUT_MS },
+      (error, stdout, stderr) => {
+        // Concatenate stdout, stderr and error for the log
+        //logContent = stdout + "\n\n" + stderr + "\n" + error + "\n\n";
 
-      logContent = stdout;
+        logContent = stdout;
 
-      if (error != null) {
-        logContent += "\n\n" + error;
+        // error already contains stderr
+        if (error != null) {
+          logContent += "\n\n" + error;
+        }
+
+        if (error) {
+          if (error.killed) {
+            logContent = "Process timed out and was killed.\n\n" + logContent;
+          }
+
+          // If the process itself failed, a.k.a exit code is not 0
+          reject(logContent);
+          exceptionOccured = true;
+        } else {
+          /*
+        else if (stderr && /error/i.test(stderr)) {
+          // If stderr contains an error message
+          reject(logContent);
+          exceptionOccured = true;
+          
+        } */
+          resolve();
+        }
       }
-
-      if (error) {
-        // If the process itself failed, a.k.a exit code is not 0
-        reject(logContent);
-        exceptionOccured = true;
-      } else if (stderr && /error/i.test(stderr)) {
-        // If stderr contains an error message
-        reject(logContent);
-        exceptionOccured = true;
-      } else {
-        resolve();
-      }
-    });
+    );
   });
 
   const fileNames: string[] = [];
@@ -176,7 +191,7 @@ async function runWeaver(data: WorkerData): Promise<WorkerOutput> {
 
       console.log("Found files in folder '" + resultFolder + "': " + files);
 
-      // By default, set index to 0
+      // By default, do not assume there are output files
       mainFile = -1;
       let index = -1;
       files.forEach((file) => {

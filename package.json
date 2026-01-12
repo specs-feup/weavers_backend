@@ -17,8 +17,8 @@
     "pretest": "npm run build"
   },
   "dependencies": {
-    "@specs-feup/clava": "^3.0.31",
-    "@specs-feup/kadabra": "^1.0.3",
+    "@specs-feup/clava": "^3.5.0",
+    "@specs-feup/kadabra": "^1.5.1",
     "@specs-feup/metafor": "^0.0.6",
     "node-worker-threads-pool": "^1.5.1",
     "archiver": "^7.0.1",

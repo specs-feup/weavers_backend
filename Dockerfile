@@ -9,7 +9,7 @@ ARG TOOL=placeholder
 ENV TOOL=${TOOL}
 
 RUN apt-get update && \
-    apt-get install -y git curl python-is-python3 openjdk-21-jdk make g++ && \
+    apt-get install -y git curl python-is-python3 openjdk-21-jdk make flang-20 g++ && \
     # apt-get install -y python3 make g++ openjdk-21-jdk && \
     apt-get clean
 

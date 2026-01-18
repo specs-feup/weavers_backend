@@ -1,5 +1,5 @@
 # This workflow generates the JSON files required for the sidebar of the demo site.
-# These JSONs are published via a new GitHub Release created on each push to the main branch.
+# These JSONs are published via a new GitHub Pages updated on each push to the main branch.
 
 name: sidebar-jsons
 
@@ -9,8 +9,13 @@ on:
       - main
 
 permissions:
-  checks: write
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
 
 env:
   JAVA_VERSION: 21
@@ -116,21 +121,34 @@ jobs:
         env:
           GITHUB_DEPENDENCY_GRAPH_ENABLED: false
 
-      - name: Create Release with JSONs
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: sidebar-jsons-${{ github.sha }}
-          name: Sidebar JSONs (${{ github.sha }})
-          body: |
-            Auto-generated sidebar JSON bundle.
+      - name: Prepare GitHub Pages artifact (JSONs only)
+        shell: bash
+        run: |
+          set -euo pipefail
 
-            Source commit: ${{ github.sha }}
-            Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          files: |
-            clava/ClavaWeaver/src/pt/up/fe/specs/clava/weaver/CxxWeaver.json
-            kadabra/JavaWeaver/src/weaver/kadabra/JavaWeaver.json
-            alpakka/AlpakkaWeaver/src/pt/up/fe/specs/alpakka/weaver/SmaliWeaver.json
-            anyweaver/AnyWeaver/src/pt/up/fe/specs/anycompiler/weaver/AnyWeaver.json
-            metafor/FortranWeaver/src/pt/up/fe/specs/fortran/weaver/FortranWeaver.json
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          rm -rf site
+          mkdir -p site
+
+          cp clava/ClavaWeaver/src/pt/up/fe/specs/clava/weaver/CxxWeaver.json site/CxxWeaver.json
+          cp kadabra/JavaWeaver/src/weaver/kadabra/JavaWeaver.json site/JavaWeaver.json
+          cp alpakka/AlpakkaWeaver/src/pt/up/fe/specs/alpakka/weaver/SmaliWeaver.json site/SmaliWeaver.json
+          cp anyweaver/AnyWeaver/src/pt/up/fe/specs/anycompiler/weaver/AnyWeaver.json site/AnyWeaver.json
+          cp metafor/FortranWeaver/src/pt/up/fe/specs/fortran/weaver/FortranWeaver.json site/FortranWeaver.json
+
+          echo "Published files:" 
+          find site -maxdepth 1 -type f -print | sort
+          test "$(find site -maxdepth 1 -type f | wc -l)" -eq 5
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build-java
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

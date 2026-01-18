@@ -1,0 +1,130 @@
+# This workflow generates the JSON files required for the sidebar of the demo site.
+# These JSONs are published via a new GitHub Release created on each push to the main branch.
+
+name: sidebar-jsons
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  checks: write
+  contents: write
+
+env:
+  JAVA_VERSION: 21
+
+jobs:
+  build-java:
+    name: Build Java
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: current
+          dependency-graph: generate-and-submit
+
+      - name: Checkout specs-java-libs
+        uses: actions/checkout@v4
+        with:
+          repository: specs-feup/specs-java-libs
+          path: specs-java-libs
+
+      - name: Checkout lara-framework
+        uses: actions/checkout@v4
+        with:
+          repository: specs-feup/lara-framework
+          path: lara-framework
+
+      - name: Checkout Clava
+        uses: actions/checkout@v4
+        with:
+          repository: specs-feup/clava
+          path: clava
+
+      - name: Checkout Kadabra
+        uses: actions/checkout@v4
+        with:
+          repository: specs-feup/kadabra
+          path: kadabra
+
+      - name: Checkout Alpakka
+        uses: actions/checkout@v4
+        with:
+          repository: specs-feup/alpakka
+          path: alpakka
+
+      - name: Checkout Anyweaver
+        uses: actions/checkout@v4
+        with:
+          repository: specs-feup/anyweaver
+          path: anyweaver
+
+      - name: Checkout Metafor
+        uses: actions/checkout@v4
+        with:
+          repository: specs-feup/fortran-transpiler
+          path: metafor
+
+      - name: Generate JSON for Clava
+        run: |
+          cd clava/ClavaWeaver
+          gradle generateWeaver
+        env:
+          GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+
+      - name: Generate JSON for Kadabra
+        run: |
+          cd kadabra/JavaWeaver
+          gradle generateWeaver
+        env:
+          GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+
+      - name: Generate JSON for Alpakka
+        run: |
+          cd alpakka/AlpakkaWeaver
+          gradle generateWeaver
+        env:
+          GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+
+      - name: Generate JSON for Anyweaver
+        run: |
+          cd anyweaver/AnyWeaver
+          gradle generateWeaver
+        env:
+          GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+
+      - name: Generate JSON for Metafor
+        run: |
+          cd metafor/FortranWeaver
+          gradle generateWeaver
+        env:
+          GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+
+      - name: Create Release with JSONs
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: sidebar-jsons-${{ github.sha }}
+          name: Sidebar JSONs (${{ github.sha }})
+          body: |
+            Auto-generated sidebar JSON bundle.
+
+            Source commit: ${{ github.sha }}
+            Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          files: |
+            clava/ClavaWeaver/src/pt/up/fe/specs/clava/weaver/CxxWeaver.json
+            kadabra/JavaWeaver/src/weaver/kadabra/JavaWeaver.json
+            alpakka/AlpakkaWeaver/src/pt/up/fe/specs/alpakka/weaver/SmaliWeaver.json
+            anyweaver/AnyWeaver/src/pt/up/fe/specs/anycompiler/weaver/AnyWeaver.json
+            metafor/FortranWeaver/src/pt/up/fe/specs/fortran/weaver/FortranWeaver.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

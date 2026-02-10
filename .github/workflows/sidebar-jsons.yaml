@@ -1,0 +1,154 @@
+# This workflow generates the JSON files required for the sidebar of the demo site.
+# These JSONs are published via a new GitHub Pages updated on each push to the main branch.
+
+name: sidebar-jsons
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: 21
+
+jobs:
+  build-java:
+    name: Build Java
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: current
+
+      - name: Checkout specs-java-libs
+        uses: actions/checkout@v4
+        with:
+          repository: specs-feup/specs-java-libs
+          path: specs-java-libs
+          ref: lara-dsl-deprecation
+
+      - name: Checkout lara-framework
+        uses: actions/checkout@v4
+        with:
+          repository: specs-feup/lara-framework
+          path: lara-framework
+          ref: lara-dsl-deprecation
+
+      - name: Checkout Clava
+        uses: actions/checkout@v4
+        with:
+          repository: specs-feup/clava
+          path: clava
+          ref: lara-dsl-deprecation
+
+      - name: Checkout Kadabra
+        uses: actions/checkout@v4
+        with:
+          repository: specs-feup/kadabra
+          path: kadabra
+          ref: lara-dsl-deprecation
+
+      - name: Checkout Alpakka
+        uses: actions/checkout@v4
+        with:
+          repository: specs-feup/alpakka
+          path: alpakka
+          ref: lara-dsl-deprecation
+
+      - name: Checkout Anyweaver
+        uses: actions/checkout@v4
+        with:
+          repository: specs-feup/anyweaver
+          path: anyweaver
+          ref: lara-dsl-deprecation
+
+      - name: Checkout Metafor
+        uses: actions/checkout@v4
+        with:
+          repository: specs-feup/fortran-transpiler
+          path: metafor
+          ref: lara-dsl-deprecation
+
+      - name: Generate JSON for Clava
+        run: |
+          cd clava/ClavaWeaver
+          gradle generateWeaver
+        env:
+          GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+
+      - name: Generate JSON for Kadabra
+        run: |
+          cd kadabra/JavaWeaver
+          gradle generateWeaver
+        env:
+          GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+
+      - name: Generate JSON for Alpakka
+        run: |
+          cd alpakka/AlpakkaWeaver
+          gradle generateWeaver
+        env:
+          GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+
+      - name: Generate JSON for Anyweaver
+        run: |
+          cd anyweaver/AnyWeaver
+          gradle generateWeaver
+        env:
+          GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+
+      - name: Generate JSON for Metafor
+        run: |
+          cd metafor/FortranWeaver
+          gradle generateWeaver
+        env:
+          GITHUB_DEPENDENCY_GRAPH_ENABLED: false
+
+      - name: Prepare GitHub Pages artifact (JSONs only)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          rm -rf site
+          mkdir -p site
+
+          cp clava/ClavaWeaver/src/pt/up/fe/specs/clava/weaver/CxxWeaver.json site/CxxWeaver.json
+          cp kadabra/JavaWeaver/src/weaver/kadabra/JavaWeaver.json site/JavaWeaver.json
+          cp alpakka/AlpakkaWeaver/src/pt/up/fe/specs/alpakka/weaver/SmaliWeaver.json site/SmaliWeaver.json
+          cp anyweaver/AnyWeaver/src/pt/up/fe/specs/anycompiler/weaver/AnyWeaver.json site/AnyWeaver.json
+          cp metafor/FortranWeaver/src/pt/up/fe/specs/fortran/weaver/FortranWeaver.json site/FortranWeaver.json
+
+          echo "Published files:" 
+          find site -maxdepth 1 -type f -print | sort
+          test "$(find site -maxdepth 1 -type f | wc -l)" -eq 5
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: site
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build-java
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

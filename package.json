@@ -19,7 +19,7 @@
   "dependencies": {
     "@specs-feup/clava": "^3.5.0",
     "@specs-feup/kadabra": "^1.5.2",
-    "@specs-feup/metafor": "^0.0.6",
+    "@specs-feup/metafor": "^0.0.7",
     "node-worker-threads-pool": "^1.5.1",
     "archiver": "^7.0.1",
     "cors": "^2.8.5",

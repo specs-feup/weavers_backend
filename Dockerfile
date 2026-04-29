@@ -28,7 +28,7 @@ RUN apt-get install -y bash
 
 ENV NVM_DIR=/root/.nvm
 
-RUN	curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash && \
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash && \
     . "$NVM_DIR/nvm.sh" && \
     nvm install v22.18.0 && \
     nvm use v22.18.0

@@ -17,12 +17,12 @@ RUN apt-get update && \
 
 # For running Metafor
 RUN wget https://raw.githubusercontent.com/specs-feup/flang-dumper/refs/heads/main/scripts/install-dependencies.sh && \
-	wget https://raw.githubusercontent.com/specs-feup/flang-dumper/refs/heads/main/scripts/llvm.sh && \
-	wget https://raw.githubusercontent.com/specs-feup/flang-dumper/refs/heads/main/scripts/setup.sh && \
+    wget https://raw.githubusercontent.com/specs-feup/flang-dumper/refs/heads/main/scripts/llvm.sh && \
+    wget https://raw.githubusercontent.com/specs-feup/flang-dumper/refs/heads/main/scripts/setup.sh && \
     chmod +x install-dependencies.sh && \
     chmod +x llvm.sh && \
     chmod +x setup.sh && \
-	./setup.sh
+    ./setup.sh
 
 RUN apt-get install -y bash
 
@@ -30,8 +30,8 @@ ENV NVM_DIR=/root/.nvm
 
 RUN	curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash && \
     . "$NVM_DIR/nvm.sh" && \
-	nvm install v22.18.0 && \
-	nvm use v22.18.0	
+    nvm install v22.18.0 && \
+    nvm use v22.18.0
 
 ENV PATH=$NVM_DIR/versions/node/v22.18.0/bin:$PATH
 

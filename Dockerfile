@@ -11,7 +11,7 @@ ENV TOOL=${TOOL}
 
 
 RUN apt-get update && \
-    apt-get install -y git curl python-is-python3 openjdk-21-jdk make g++ wget && \
+    apt-get install -y lsb-release git curl python-is-python3 openjdk-21-jdk make g++ wget && \
     # apt-get install -y python3 make g++ openjdk-21-jdk && \
     apt-get clean
 

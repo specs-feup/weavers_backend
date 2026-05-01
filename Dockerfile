@@ -17,10 +17,8 @@ RUN apt-get update && \
 
 # For running Metafor
 RUN wget https://raw.githubusercontent.com/specs-feup/flang-dumper/refs/heads/feature/flang-22/scripts/install-dependencies.sh && \
-#    wget https://raw.githubusercontent.com/specs-feup/flang-dumper/refs/heads/main/scripts/llvm.sh && \
     wget https://raw.githubusercontent.com/specs-feup/flang-dumper/refs/heads/feature/flang-22/scripts/setup.sh && \
     chmod +x install-dependencies.sh && \
-#    chmod +x llvm.sh && \
     chmod +x setup.sh && \
     ./setup.sh
 

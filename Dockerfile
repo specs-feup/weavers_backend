@@ -69,6 +69,9 @@ COPY . .
 
 RUN npm run build
 
+
+RUN apt-get install -y libxml2
+
 # Expose the backend port
 EXPOSE 4000
 

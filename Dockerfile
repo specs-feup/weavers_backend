@@ -69,15 +69,6 @@ COPY . .
 
 RUN npm run build
 
-
-RUN apt-get update \
- && apt-get install -y --no-install-recommends wget ca-certificates \
- && wget http://archive.ubuntu.com/ubuntu/pool/main/libx/libxml2/libxml2_2.9.14+dfsg-1.3ubuntu3_amd64.deb \
- && apt-get install -y ./libxml2_2.9.14+dfsg-1.3ubuntu3_amd64.deb \
- && rm libxml2_2.9.14+dfsg-1.3ubuntu3_amd64.deb \
- && ldconfig \
- && rm -rf /var/lib/apt/lists/*
-
 # Expose the backend port
 EXPOSE 4000
 

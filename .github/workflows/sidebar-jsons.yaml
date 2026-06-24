@@ -42,49 +42,48 @@ jobs:
         with:
           repository: specs-feup/specs-java-libs
           path: specs-java-libs
-          ref: lara-dsl-deprecation
 
       - name: Checkout lara-framework
         uses: actions/checkout@v4
         with:
           repository: specs-feup/lara-framework
           path: lara-framework
-          ref: lara-dsl-deprecation
+          ref: staging
 
       - name: Checkout Clava
         uses: actions/checkout@v4
         with:
           repository: specs-feup/clava
           path: clava
-          ref: lara-dsl-deprecation
+          ref: staging
 
       - name: Checkout Kadabra
         uses: actions/checkout@v4
         with:
           repository: specs-feup/kadabra
           path: kadabra
-          ref: lara-dsl-deprecation
+          ref: staging
 
       - name: Checkout Alpakka
         uses: actions/checkout@v4
         with:
           repository: specs-feup/alpakka
           path: alpakka
-          ref: lara-dsl-deprecation
+          ref: staging
 
       - name: Checkout Anyweaver
         uses: actions/checkout@v4
         with:
           repository: specs-feup/anyweaver
           path: anyweaver
-          ref: lara-dsl-deprecation
+          ref: staging
 
       - name: Checkout Metafor
         uses: actions/checkout@v4
         with:
           repository: specs-feup/fortran-transpiler
           path: metafor
-          ref: lara-dsl-deprecation
+          ref: staging
 
       - name: Generate JSON for Clava
         run: |
